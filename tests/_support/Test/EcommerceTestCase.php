@@ -56,6 +56,14 @@ abstract class EcommerceTestCase extends TestCase
             $configurator->configure($this->session);
 
             $this->session->getBag(SessionBagListener::ATTRIBUTE_BAG_CART)->set('carts', []);
+
+            $requestStack = \Pimcore::getContainer()->get('request_stack');
+            if (!$request = $requestStack->getMainRequest()) {
+                $request = new Request();
+                $requestStack->push($request);
+            }
+
+            $request->setSession($this->session);
         }
 
         return $this->session;
