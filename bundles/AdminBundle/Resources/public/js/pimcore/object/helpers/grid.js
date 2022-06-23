@@ -104,7 +104,7 @@ pimcore.object.helpers.grid = Class.create({
 
                 // Don't add batch options if field has dynamic options
                 if (
-                    !fieldConfig.hasOwnProperty('layout')
+                    !fieldConfig.hasOwnProperty('layout') || typeof (fieldConfig.layout) === 'undefined'
                     || !fieldConfig.layout.hasOwnProperty('dynamicOptions')
                     || fieldConfig.layout.dynamicOptions !== true
                 ) {
@@ -404,7 +404,7 @@ pimcore.object.helpers.grid = Class.create({
 
                         fc.locked = this.getColumnLock(field);
 
-                        if ((fieldType === "select" || fieldType === "multiselect") && field.layout.options.length > 0) {
+                        if ((fieldType === "select" || fieldType === "multiselect") && field.layout.options && field.layout.options.length > 0) {
                             field.layout.options.forEach(option => {
                                 option.key = t(option.key);
                             });

@@ -78,7 +78,7 @@ final class Config
         $keys = $repository->fetchAllKeys();
         foreach ($keys as $key) {
             $configKey = $repository->loadConfigByKey(($key));
-            if (isset($configKey) && is_array(($configKey))) {
+            if (isset($configKey[0])) {
                 $configKey[0]['writeable'] = $repository->isWriteable($key, $configKey[1]);
                 $config = array_merge($config, [$key => $configKey[0]]);
             }
@@ -255,6 +255,7 @@ final class Config
 
         $event = new GenericEvent(null, [
             'result' => $result,
+            'configName' => $currentConfigName,
         ]);
         \Pimcore::getEventDispatcher()->dispatch($event, AdminEvents::PERSPECTIVE_POST_GET_RUNTIME);
 

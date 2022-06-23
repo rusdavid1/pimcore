@@ -185,12 +185,17 @@ trait ImageThumbnailTrait
         $pathReference = $this->getPathReference();
         if (in_array($pathReference['type'], ['thumbnail', 'asset'])) {
             try {
-                $info = @getimagesize($this->getLocalFile());
-                if ($info) {
-                    $dimensions = [
-                        'width' => $info[0],
-                        'height' => $info[1],
-                    ];
+                $localFile = $this->getLocalFile();
+                if (null !== $localFile) {
+                    if ($imageInfo = @getimagesize($localFile)) {
+                        $this->getAsset()->getDao()->addToThumbnailCache(
+                            $this->getConfig()->getName(),
+                            basename($pathReference['storagePath']),
+                            filesize($localFile),
+                            $imageInfo[0],
+                            $imageInfo[1]
+                        );
+                    }
                 }
             } catch (\Exception $e) {
                 // noting to do
@@ -210,7 +215,13 @@ trait ImageThumbnailTrait
             $asset = $this->getAsset();
             $dimensions = [];
 
-            if ($this->exists()) {
+            $thumbnail = $asset->getDao()->getCachedThumbnail($config->getName(), $this->getFilename());
+            if ($thumbnail && $thumbnail['width'] && $thumbnail['height']) {
+                $dimensions['width'] = $thumbnail['width'];
+                $dimensions['height'] = $thumbnail['height'];
+            }
+
+            if (empty($dimensions) && $this->exists()) {
                 $dimensions = $this->readDimensionsFromFile();
             }
 
@@ -225,8 +236,8 @@ trait ImageThumbnailTrait
                 $dimensions = $this->readDimensionsFromFile();
             }
 
-            $this->width = isset($dimensions['width']) ? $dimensions['width'] : null;
-            $this->height = isset($dimensions['height']) ? $dimensions['height'] : null;
+            $this->width = $dimensions['width'] ?? null;
+            $this->height = $dimensions['height'] ?? null;
 
             // the following is only relevant if using high-res option (retina, ...)
             $this->realHeight = $this->height;
@@ -328,13 +339,19 @@ trait ImageThumbnailTrait
     /**
      * @internal
      *
-     * @return string
+     * @return string|null
      *
      * @throws \Exception
      */
     public function getLocalFile()
     {
-        return self::getLocalFileFromStream($this->getStream());
+        $stream = $this->getStream();
+
+        if (null === $stream) {
+            return null;
+        }
+
+        return self::getLocalFileFromStream($stream);
     }
 
     /**
@@ -387,5 +404,29 @@ trait ImageThumbnailTrait
         }
 
         return self::$supportedFormats[$format];
+    }
+
+    public function getFileSize(): ?int
+    {
+        $thumbnail = $this->getAsset()->getDao()->getCachedThumbnail($this->getConfig()->getName(), $this->getFilename());
+        if ($thumbnail && $thumbnail['filesize']) {
+            return $thumbnail['filesize'];
+        }
+
+        $pathReference = $this->getPathReference(false);
+        if ($pathReference['type'] === 'asset') {
+            return $this->asset->getFileSize();
+        } elseif (isset($pathReference['storagePath'])) {
+            return Tool\Storage::get('thumbnail')->fileSize($pathReference['storagePath']);
+        }
+
+        return null;
+    }
+
+    private function getFilename(): string
+    {
+        $pathReference = $this->getPathReference(true);
+
+        return basename($pathReference['src']);
     }
 }
