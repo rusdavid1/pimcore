@@ -2,7 +2,7 @@
 Pimcore offers a Static Page Generator service, which is used to generate HTML pages from Pimcore documents. This generator service works by taking a Pimcore document with content and templates and renders them into a full HTML page, that can served directly from the server without the intervention of templating engine.
 
 ## Enable Static Page generator for a Document
-To enable automatic static page generation on document save or by CLI command, go to Document -> Settings -> Satic Page Generator.
+To enable automatic static page generation on document save or by CLI command, go to Document -> Settings -> Static Page Generator.
 ![Static Page Settings](../img/static_page1.png)
 
 Mark enable checkbox and define optional lifetime for static pages (which regenerates static page after lifetime) and save document.
